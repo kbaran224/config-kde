@@ -1,0 +1,4 @@
+# nvim plugins, undos, backups, and history
+nvim/plugged/
+nvim/dirs/
+nvim/yankring_history_v2.txt
