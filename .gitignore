@@ -2,3 +2,6 @@
 nvim/plugged/
 nvim/dirs/
 nvim/yankring_history_v2.txt
+
+# tmux plugins
+tmux/plugins/
