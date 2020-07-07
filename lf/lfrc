@@ -1,0 +1,344 @@
+# interpreter for shell commands (needs to be POSIX compatible)
+set shell /bin/bash
+
+# set '-eu' options for shell commands
+# These options are used to have safer shell commands. Option '-e' is used to
+# exit on error and option '-u' is used to give error for unset variables.
+# Option '-f' disables pathname expansion which can be useful when $f, $fs, and
+# $fx variables contain names with '*' or '?' characters. However, this option
+# is used selectively within individual commands as it can be limiting at
+# times.
+set shellopts '-eu'
+
+set color256 on
+set icons
+
+set previewer /home/kbaran/.config/lf/scope.sh
+
+# panes ratio
+set ratios 2:6:8
+
+#%{{
+#	w=$(tput cols)
+#	if [ $w -le 80 ]; then
+#		lf -remote "send $id set ratios 1:2"
+#	elif [ $w -le 160 ]; then
+#		lf -remote "send $id set ratios 1:2:3"
+#	else
+#		lf -remote "send $id set ratios 1:2:3:5"
+#	fi
+#}}
+
+
+# set internal field separator (IFS) to "\n" for shell commands
+# This is useful to automatically split file names in $fs and $fx properly
+# since default file separator used in these variables (i.e. 'filesep' option)
+# is newline. You need to consider the values of these options and create your
+# commands accordingly.
+set ifs "\n"
+
+# leave some space at the top and the bottom of the screen
+set scrolloff 5
+
+set incsearch on
+#set wrapscroll on
+
+cmd put-progress &{{
+	set -f
+
+	load=$(lf -remote 'load')
+	mode=$(printf "%s\n" "$load" | sed -n '1p')
+	list=$(printf "%s\n" "$load" | sed '1d')
+
+	if [ $mode = 'copy' ]; then
+		#rsync -av --ignore-existing --partial --skip-compress \
+		#--inplace --progress $list . \
+		#| stdbuf -i0 -o0 -e0 tr '\r' '\n' \
+		rsync -a --ignore-existing --skip-compress \
+		--inplace --info=PROGRESS2 $list . \
+		| stdbuf -i0 -o0 -e0 tr '\r' '\n' \
+		| while read line; do
+			lf -remote "send $id echo $line"
+		done
+	fi
+
+	lf -remote "$(printf 'save\nmove\n\n')"
+	lf -remote 'send load'
+	lf -remote 'send sync'
+}}
+map P put-progress
+
+# show hidden files by default
+set hidden
+
+# toggle options
+map zp set preview!
+map zh set hidden!
+map <bs> set hidden!
+
+# show size and time info by default
+set info size:time
+
+# select what information to show
+map zn set info
+map zs set info size
+map zt set info time
+map za set info size:time
+
+# sort files and show the corresponding info
+map sn :set sortby natural; set info
+map ss :set sortby size; set info size
+map st :set sortby time; set info time
+
+# common directories
+map gR cd /
+map gB cd /sbin
+map gE cd /etc
+map gU cd /usr
+map gD cd /dev
+map gO cd /opt
+map gV cd /var
+map gM cd /media
+#---------------#
+map gh cd ~
+map gb cd ~/bin
+map ge cd ~/etc
+map gu cd ~/usr
+map gv cd ~/var
+map gs cd ~/src
+map gc cd ~/.config
+map gf cd ~/usr/downloads_firefox
+map gt cd ~/usr/downloads_tox
+map gr cd ~/usr/downloads_rambox
+
+# use enter for shell commands
+map <enter> shell
+
+# mappings for pager and editor (change as you like)
+map i $set -f; ~/.config/lf/scope.sh $f | less -R
+map e $set -f;  ${EDITOR} $f
+
+# mapping to spawn a shell in working directory
+# (see also etc/lfcd.sh as an alternative workflow)
+map w $$SHELL
+
+# execute current file (must be executable)
+map x $$f
+map X !$f
+
+# dedicated keys for file opener actions
+map o $rifle -- $f
+map O &rifle -- $f
+
+# define a custom 'open' command
+# 'open' is called by 'open' when current file is not a directory. You may
+# want to use either file extensions and/or mime types here. Below uses an
+# editor for text files and a file opener for the rest.
+cmd open ${{
+	case "$f" in
+		*.tar.bz|*.tar.bz2|*.tbz|*.tbz2|*.tar.gz|*.tgz|*.tar.xz|*.txz|*.zip|*.rar|*.iso)
+			file_dir="$(dirname "$f")"
+			filename=".$(basename "$f")"
+			mntdir="$file_dir/$filename-archivemount"
+
+			if [ ! -d "$mntdir" ]; then 
+				mkdir "$mntdir"
+				archivemount "$f" "$mntdir"
+				echo "$mntdir" >> "/tmp/__lf_archivemount_$id"
+			fi
+
+			lf -remote "send $id cd \"$mntdir\""
+			lf -remote "send $id reload"
+		;;
+		*) 
+			case $(file --mime-type $f -b) in
+			*.tar.bz|*.tar.bz2|*.tbz|*.tbz2|*.tar.gz|*.tgz|*.tar.xz|*.txz|*.zip|*.rar|*.iso)
+				mntdir="$f-archivemount"
+	
+				if [ ! -d "$mntdir" ]; then 
+					mkdir "$mntdir"
+					archivemount "$f" "$mntdir"
+					echo "$mntdir" >> "/tmp/__lf_archivemount_$id"
+				fi
+
+				lf -remote "send $id cd \"$mntdir\""
+				lf -remote "send $id reload"
+			;;
+			text/*) ${EDITOR} -- $fx;;
+			#image/*) rifle_sxiv.sh $f;;
+			image/*) feh $fx;;
+			application/octet-stream) mpv -- $fx;;
+			#*) for f in $fx; do ${OPENER} $f > /dev/null 2> /dev/null & done;;
+			*) rifle -- $fx;;
+		esac
+		;;
+	esac
+}}
+
+# rename current file without overwrite
+cmd rename ${{
+        if [ -e "$*" ]; then
+                lf -remote "send $id echo file exists"
+        else
+                mv "$f" "$*"
+        fi
+}}
+#map r push :rename<space>
+map a $lf -remote "send $id push :rename<space>${f##*/}"
+
+cmd underscore ${{
+	set -f
+	for i in $fx; do
+		new="$(printf "%s\n" "$i" | awk '{$1=$1}1' OFS="_")"
+		mv "$i" "$new"
+	done
+}}
+
+cmd makedir %{{
+	set -f
+
+	name="$(echo "$@" | tr -d "\n")"
+	if [ -d "$name" ]; then
+		printf "dir exists"
+	else
+		mkdir -p -- "$name"
+	fi
+}}
+map m push :makedir<space>
+
+# edit this file
+cmd conf $$EDITOR "$HOME/.config/lf/lfrc"
+
+# show disk usage
+cmd disk_usage &{{
+	set -f
+	du="Total $(du -hs .)"
+	lf -remote "send $id echo $du"
+}}
+cmd file_usage &{{
+	set -f
+	du="Total $(du -hsc $fx | awk 'END{print $1}')"
+	lf -remote "send $id echo $du"
+}}
+map u disk_usage
+map U file_usage
+
+# clear selection
+map C unselect
+
+# glob select and unselect
+map <c-space> push :glob-select<space>
+
+# make sure trash folder exists
+#$mkdir -p ~/.trash
+
+# move current file or selected files to trash folder
+#cmd trash $set -f; mv $fx ~/.trash
+cmd trash $trash-put $fx
+
+# remove current file or selected files (prompting)
+#cmd remove ${{
+#	set -f
+#
+#	printf "$fx\n"
+#	printf "remove?[y/n]"
+#	read -r ans
+#	[ $ans = "y" ] && rm -rf $fx
+#}}
+
+cmd bulk-rename ${{
+    old=$(mktemp)
+    new=$(mktemp)
+    [ -n $fs ] && fs=$(ls)
+    printf "$fs\n" > $old
+    printf "$fs\n" > $new
+    $EDITOR $new
+    [ $(cat $new | wc -l) -ne $(cat $old | wc -l) ] && exit
+    paste $old $new | while read names; do
+        src=$(printf $names | cut -f1)
+        dst=$(printf $names | cut -f2)
+        [ $src = $dst ] && continue
+        [ -e $dst ] && continue
+        mv $src $dst
+    done
+    rm $old $new
+    lf -remote "send $id unselect"
+}}
+
+map A bulk-rename
+
+# extract the current file with the right command
+cmd extract $aunpack $fx
+
+# compress marked files :compress [name] [ext](zip if not specified)
+# this command takes the output name without '.ext' suffix as an argument
+# (e.g. 'compress foo 7z' creates 'foo.7z').
+cmd compress ${{
+	[ -z "$1" ] && exit 1
+:	${EXT:="${2:-zip}"}
+
+	if [ "$EXT" = "zip" ]; then
+		if zip -rj "$1.$EXT" $fx; then
+			lf -remote "send $id echo $1.$EXT created successfully"
+		else
+			lf -remote "send $id echo failed to create $1.$EXT"
+		fi
+	else
+		DIR="$1_$$"; fDIR="$(pwd)"; mkdir "$DIR" || exit 1
+		if cp -r $fx "$DIR"; then
+			cd "$DIR"
+			set +f # shell expansion
+			if apack "$fDIR/$1.$EXT" *; then
+				lf -remote "send $id echo $1.$EXT created successfully"
+			else
+				lf -remote "send $id echo failed to create $1.$EXT"
+			fi
+		fi
+		rm -rf "$fDIR/$DIR"
+	fi
+}}
+
+# ssh scp
+# experimental
+#cmd scp ${{
+#	load=$(lf -remote 'load')
+#	mode=$(printf "%s\n" "$load" | sed -n '1p')
+#	list=$(printf "%s\n" "$load" | sed '1d')
+#
+#	if [ $mode = 'copy' ]; then
+#		printf "enter ssh server username and adress)"; read -r adress
+#		printf "enter path on the server"; read -r path
+#		scp $list "${adress}":"${path}"
+#	fi
+#
+#	lf -remote "$(printf 'save\nmove\n\n')"
+#	lf -remote 'send load'
+#	lf -remote 'send sync'
+#}}
+
+# keybindings
+map <c-y> up
+map <c-e> down
+map <c-n> $tmux new-window lf
+map L $tmux next-window
+map H $tmux previous-window
+map - &printf "%s" "$fx" | xclip
+map _ &printf "%s" "$fx" | sed 's|.*/||g' | xclip
+
+# cut, trash and delete as different keybindings
+map d
+map dd cut
+map dD delete
+
+
+#cmd kdeconnect-file &{{
+	#set -f
+	#lf -remote 'send copy'
+
+	#files="$(lf -remote 'load' | sed -e '1d' -e '/^[[:punct:]]/!d')"
+	#printf "%s\n" "$files" | xe -s 'kdeconnect-cli -d "${KDECONNECT:-25145da22f9f04f9}" --share "file://$1"'
+
+	#lf -remote "$(printf 'save\nmove\n\n')"
+	#lf -remote 'send load'
+	#lf -remote 'send sync'
+#}}
