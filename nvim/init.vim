@@ -210,6 +210,11 @@ let g:deoplete#enable_ignore_case           = 1
 let g:context_filetype#same_filetypes       = {}
 let g:context_filetype#same_filetypes._     = '_'
 
+" needed so deoplete can auto select the first suggestion
+set completeopt+=noinsert
+" comment this line to enable autocompletion doc in preview window
+"set completeopt-=preview
+
 " Window Chooser ------------------------------
 
 " mapping
@@ -269,12 +274,18 @@ let g:airline_symbols.linenr = '⭡'
 " Mapping for <leader>
 let mapleader = ","
 
+" Paste and yank to + buffer
+map <Leader>p "+p
+map <Leader>y "+y
+
 " Quick exit
 nmap <leader>e :exit <CR>
 " Quick write and exit
 nmap <leader>w :wg <CR>
 " Quick write with sudo
 nmap <leader>W :execute ':silent w !sudo tee % > /dev/null' | :edit!
+" save as sudo
+ca w!! w !sudo tee "%"
 
 " tabs and spaces handling
 set expandtab
@@ -296,18 +307,9 @@ let g:rehash256 = 1
 let g:molokai_original = 1
 colorscheme molokai
 
-" needed so deoplete can auto select the first suggestion
-set completeopt+=noinsert
-" comment this line to enable autocompletion preview window
-" (displays documentation related to the selected completion option)
-"set completeopt-=preview
-
 " autocompletion of files and commands behaves like shell
 " (complete only the common part, list the options that match)
 set wildmode=list:longest
-
-" save as sudo
-ca w!! w !sudo tee "%"
 
 " tab navigation mappings
 nnoremap th  :tabfirst<CR>
@@ -325,11 +327,7 @@ set scrolloff=3
 " clear search results
 nnoremap <silent> // :noh<CR>
 
-" clear empty spaces at the end of lines on save of python files
-autocmd BufWritePre *.py :%s/\s\+$//e
 
-map <Leader>p "+p
-map <Leader>y "+y
 " fix problems with uncommon shells (fish, xonsh) and plugins running commands
 " (neomake, ...)
 set shell=/bin/bash 
