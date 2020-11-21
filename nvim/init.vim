@@ -54,7 +54,7 @@ Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 
 " Better file browser
-Plug 'scrooloose/nerdtree'
+Plug 'ms-jpq/chadtree', {'branch': 'chad', 'do': ':UpdateRemotePlugins'}
 
 " Search results counter
 Plug 'vim-scripts/IndexedSearch'
@@ -62,8 +62,6 @@ Plug 'vim-scripts/IndexedSearch'
 " Window chooser
 Plug 't9md/vim-choosewin'
 
-" Asynchronously run programs
-Plug 'neomake/neomake'
 
 " Relative numbering of lines (0 is the current line)
 Plug 'myusuf3/numbers.vim'
@@ -71,15 +69,18 @@ Plug 'myusuf3/numbers.vim'
 " Find differences between directories
 Plug 'will133/vim-dirdiff'
 
+" Start screen
+Plug 'mhinz/vim-startify'
+
 "
 " ============== Coding plugins ====================
 "
 
 " Asynchronous Lint Engine - lint code on the fly
-Plug 'dense-analysis/ale'
+"Plug 'dense-analysis/ale'
 
 " Async autocompletion
-Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+"Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 
 " Surround
 Plug 'tpope/vim-surround'
@@ -119,7 +120,7 @@ Plug 'vim-scripts/YankRing.vim'
 "
 
 " Python autocompletion
-Plug 'zchee/deoplete-jedi', { 'do': ':UpdateRemotePlugins' }
+"Plug 'zchee/deoplete-jedi', { 'do': ':UpdateRemotePlugins' }
 
 " Python go-to-definition and similar features
 Plug 'davidhalter/jedi-vim'
@@ -139,13 +140,14 @@ Plug 'tmhedberg/SimpylFold'
 
 " Main
 Plug 'fatih/vim-go'
-Plug 'stamblerre/gocode'
+"Plug 'stamblerre/gocode'
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
 " Go snippets
-Plug 'SirVer/ultisnips'
+"Plug 'SirVer/ultisnips'
 
 " Deoplete for Go
-Plug 'deoplete-plugins/deoplete-go', { 'do': 'make'}
+"Plug 'deoplete-plugins/deoplete-go', { 'do': 'make'}
 
 "
 " ============== HTML/CSS plugins ====================
@@ -183,35 +185,45 @@ endif
 " toggle tagbar display
 map <F4> :TagbarToggle<CR>
 " autofocus on tagbar open
-let g:tagbar_autofocus = 1
+let g:tagbar_autofocus = 0
 
 " NERDTree -----------------------------
 
 " toggle nerdtree display
-map <F3> :NERDTreeToggle<CR>
+"map <F3> :NERDTreeToggle<CR>
+nnoremap <F3> <cmd>CHADopen<cr>
+
 " open nerdtree with the current file selected
-nmap ,t :NERDTreeFind<CR>
+"nmap ,t :NERDTreeFind<CR>
+
 " don;t show these file types
 let NERDTreeIgnore = ['\.pyc$', '\.pyo$']
 
-" Neomake ------------------------------
 
-" Run linter on write
-autocmd! BufWritePost * Neomake
+" CoC ----------------------------------
+
+
+" Move in longer floating windows
+nnoremap <nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
+nnoremap <nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
+inoremap <nowait><expr> <C-f> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
+inoremap <nowait><expr> <C-b> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
+
+" Show docs in floating
+nnoremap <silent> K :call CocActionAsync('doHover')<cr>
+
+" Invoke completions with <C-Space>
+inoremap <silent><expr> <c-space> coc#refresh()
 
 
 " Deoplete -----------------------------
-
-" Use deoplete.
-let g:deoplete#enable_at_startup            = 1
-let g:deoplete#enable_ignore_case           = 1
 
 " complete with words from any opened file
 let g:context_filetype#same_filetypes       = {}
 let g:context_filetype#same_filetypes._     = '_'
 
 " needed so deoplete can auto select the first suggestion
-set completeopt+=noinsert
+"set completeopt+=noinsert
 " comment this line to enable autocompletion doc in preview window
 "set completeopt-=preview
 
@@ -267,6 +279,40 @@ let g:airline_symbols.branch = '⭠'
 let g:airline_symbols.readonly = '⭤'
 let g:airline_symbols.linenr = '⭡'
 
+" Startify -----------------------------
+let g:startify_session_dir = '~/.config/nvim/session'
+
+
+let g:startify_lists = [
+          \ { 'type': 'files',     'header': ['   Files']                        },
+          \ { 'type': 'dir',       'header': ['   Current Directory '. getcwd()] },
+          \ { 'type': 'sessions',  'header': ['   Sessions']                     },
+          \ { 'type': 'bookmarks', 'header': ['   Bookmarks']                    },
+          \ ]
+
+
+let g:startify_session_autoload = 1
+let g:startify_session_delete_buffers = 1
+let g:startify_change_to_vcs_root = 1
+let g:startify_fortune_use_unicode = 1
+let g:startify_session_persistence = 1
+
+let g:webdevicons_enable_startify = 1
+
+"function! StartifyEntryFormat()
+        "return 'WebDevIconsGetFileTypeSymbol(absolute_path) ." ". entry_path'
+    "endfunction
+
+let g:startify_bookmarks = [
+            \ { 'a': '~/.config/alacritty/alacritty.yml' },
+            \ { 's': '~/.config/starship.toml' },
+            \ { 'i': '~/.config/nvim/init.vim' },
+            \ { 'b': '~/.bashrc' },
+            \ '~/src/snowdog',
+            \ ]
+
+let g:startify_enable_special = 0
+
 " }}}
 
 " Vim settings and mappings {{{
@@ -274,18 +320,33 @@ let g:airline_symbols.linenr = '⭡'
 " Mapping for <leader>
 let mapleader = ","
 
+set runtimepath^=~/.config/nvim/ftplugin
+
+au BufNewFile,BufRead /*etc/icinga2/*.conf,/*usr/share/icinga2/include/{itl,plugins,*.conf} set filetype=icinga2
+
 " Paste and yank to + buffer
 map <Leader>p "+p
 map <Leader>y "+y
+
+" Run macro from letter d
+nnoremap <leader><Space> @d 
 
 " Quick exit
 nmap <leader>e :exit <CR>
 " Quick write and exit
 nmap <leader>w :wg <CR>
-" Quick write with sudo
-nmap <leader>W :execute ':silent w !sudo tee % > /dev/null' | :edit!
+
 " save as sudo
-ca w!! w !sudo tee "%"
+cmap w!! w !sudo tee %
+
+" enable highlighting current line
+set cursorline
+
+" don't show things like -- INSERT -- 
+set noshowmode
+
+" Always show signcolumn
+set signcolumn=yes
 
 " tabs and spaces handling
 set expandtab
@@ -295,6 +356,9 @@ set shiftwidth=4
 
 " show line numbers
 set nu
+
+" don't wrap long lines
+set nowrap
 
 " remove ugly vertical lines on window division
 set fillchars+=vert:\ 
@@ -321,6 +385,22 @@ nnoremap tn  :tabnext<Space>
 nnoremap tm  :tabm<Space>
 nnoremap td  :tabclose<CR>
 
+" TAB in general mode will move to text buffer
+nnoremap <silent> <TAB> :bnext<CR>
+
+" SHIFT-TAB will go back
+nnoremap <silent> <S-TAB> :bprevious<CR>
+
+" CTRL-TAB to close buffer
+nnoremap <silent> <C-TAB>  :bdelete<CR>
+
+
+" Horizontal splits - spawn below
+set splitbelow
+
+" Vertical splits - spawn right
+set splitright
+
 " when scrolling, keep cursor 3 lines away from screen border
 set scrolloff=3
 
@@ -329,8 +409,6 @@ nnoremap <silent> // :noh<CR>
 
 
 " fix problems with uncommon shells (fish, xonsh) and plugins running commands
-" (neomake, ...)
-set shell=/bin/bash 
 
 " Move naturally between splits
 nnoremap <C-J> <C-W><C-J>
@@ -339,14 +417,7 @@ nnoremap <C-L> <C-W><C-L>
 nnoremap <C-H> <C-W><C-H>
 
 " Set foldmethod
-set foldmethod=marker
-
-" Remember folds throughout opening files
-augroup remember_folds
-  autocmd!
-  autocmd BufWinLeave * mkview
-  autocmd BufWinEnter * silent! loadview
-augroup END
+setlocal foldmethod=marker
 
 " Fold with spacebar in normal mode
 nnoremap <space> za
@@ -377,29 +448,39 @@ endif
 
 " don't use swapfile
 set noswapfile
+
 " ============================================================================
 " }}}
 
 " Highlights - colors customization {{{
-highlight DiffAdd           cterm=bold ctermbg=none ctermfg=119
-highlight DiffDelete        cterm=bold ctermbg=none ctermfg=167
-highlight DiffChange        cterm=bold ctermbg=none ctermfg=227
-highlight SpellBad          cterm=underline ctermbg=none ctermfg=167
-highlight SpellCap          cterm=underline ctermbg=none ctermfg=167
-highlight Error             cterm=bold ctermbg=none ctermfg=167
-highlight CursorColumn      ctermbg=none
-highlight SignifySignAdd    cterm=bold ctermbg=none  ctermfg=119
-highlight SignifySignDelete cterm=bold ctermbg=none  ctermfg=167
-highlight SignifySignChange cterm=bold ctermbg=none  ctermfg=227
-highlight ErrorMsg          cterm=bold ctermbg=none ctermfg=167
-highlight MatchParen        cterm=bold ctermbg=none ctermfg=202
-highlight SpellLocal        cterm=none ctermbg=none ctermfg=227
-highlight Search            cterm=bold ctermbg=none ctermfg=119
-highlight Visual            cterm=reverse ctermbg=none
-highlight SignColumn        ctermbg=none
-highlight Folded            ctermbg=none ctermfg=blue
-highlight Pmenu             ctermbg=8 ctermfg=7
-highlight PmenuSel          cterm=bold ctermbg=7 ctermfg=8
-highlight VertSplit         cterm=none ctermbg=none ctermfg=none
-"}}}
+hi DiffAdd           cterm=bold ctermbg=none ctermfg=119
+hi DiffDelete        cterm=bold ctermbg=none ctermfg=167
+hi DiffChange        cterm=bold ctermbg=none ctermfg=227
+hi SpellBad          cterm=underline ctermbg=none ctermfg=167
+hi SpellCap          cterm=underline ctermbg=none ctermfg=167
+hi Error             cterm=bold ctermbg=none ctermfg=167
+hi CursorColumn      ctermbg=none
+hi SignifySignAdd    cterm=bold ctermbg=none  ctermfg=119
+hi SignifySignDelete cterm=bold ctermbg=none  ctermfg=167
+hi SignifySignChange cterm=bold ctermbg=none  ctermfg=227
+hi ErrorMsg          cterm=bold ctermbg=none ctermfg=167
+hi MatchParen        cterm=bold ctermbg=none ctermfg=202
+hi SpellLocal        cterm=none ctermbg=none ctermfg=227
+hi Search            cterm=bold ctermbg=none ctermfg=119
+hi Visual            cterm=reverse ctermbg=none
+hi SignColumn        ctermbg=none
+hi Folded            ctermbg=none ctermfg=blue
+hi Pmenu             ctermbg=236 ctermfg=7
+hi PmenuSel          cterm=bold ctermbg=238 ctermfg=208
+hi VertSplit         cterm=none ctermbg=none ctermfg=none
+hi CursorLineNr      ctermfg=208
+hi LineNr            ctermfg=249
+hi CursorLine        ctermbg=236
+hi NormalFloat       ctermbg=235
 
+function SemshiHighlights()
+    hi semshiBuiltin ctermfg=39
+endfunction
+
+autocmd FileType python call SemshiHighlights()
+"}}}
