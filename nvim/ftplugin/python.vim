@@ -7,13 +7,6 @@ set shiftwidth=4
 " Run Python code
 nmap <leader>r :!python3 % <CR>
 
-" Check code as python3
-let g:neomake_python_python_maker       = neomake#makers#ft#python#python()
-let g:neomake_python_flake8_maker       = neomake#makers#ft#python#flake8()
-let g:neomake_python_python_maker.exe   = 'python3 -m py_compile'
-let g:neomake_python_flake8_maker.exe   = 'python3 -m flake8'
-
-" Jedi-vim
 
 " Disable autocompletion (using deoplete instead)
 let g:jedi#completions_enabled          = 0
