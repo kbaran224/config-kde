@@ -76,11 +76,29 @@ Plug 'mhinz/vim-startify'
 " ============== Coding plugins ====================
 "
 
-" Asynchronous Lint Engine - lint code on the fly
-"Plug 'dense-analysis/ale'
 
-" Async autocompletion
-"Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+Plug 'nvim-lua/completion-nvim'
+Plug 'nvim-treesitter/nvim-treesitter'
+Plug 'junegunn/fzf', {'do': {-> fzf#install()}}
+Plug 'junegunn/fzf.vim'  " to enable preview (optional)
+Plug 'ojroques/nvim-lspfuzzy'
+Plug 'SirVer/ultisnips'
+Plug 'honza/vim-snippets'
+
+" TreeSitter
+
+" Language Server for nvim
+Plug 'neovim/nvim-lspconfig'
+
+" Utils for nvim lsp
+Plug 'RishabhRD/popfix'
+Plug 'RishabhRD/nvim-lsputils'
+
+
+
+
+" Autocompletion
+" Plug 'hrsh7th/nvim-compe'
 
 " Surround
 Plug 'tpope/vim-surround'
@@ -95,7 +113,7 @@ Plug 'michaeljsmith/vim-indent-object'
 Plug 'jeetsukumaran/vim-indentwise'
 
 " Better language packs
-Plug 'sheerun/vim-polyglot'
+"Plug 'sheerun/vim-polyglot'
 
 " Code commenter
 Plug 'scrooloose/nerdcommenter'
@@ -119,17 +137,8 @@ Plug 'vim-scripts/YankRing.vim'
 " ============== Python plugins ====================
 "
 
-" Python autocompletion
-"Plug 'zchee/deoplete-jedi', { 'do': ':UpdateRemotePlugins' }
-
-" Python go-to-definition and similar features
-Plug 'davidhalter/jedi-vim'
-
 " Python syntax colors
 Plug 'numirias/semshi', {'do': ':UpdateRemotePlugins'}
-
-" Automatically sort python imports
-Plug 'fisadev/vim-isort'
 
 " Python folding
 Plug 'tmhedberg/SimpylFold'
@@ -141,13 +150,7 @@ Plug 'tmhedberg/SimpylFold'
 " Main
 Plug 'fatih/vim-go'
 "Plug 'stamblerre/gocode'
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
-
-" Go snippets
-"Plug 'SirVer/ultisnips'
-
-" Deoplete for Go
-"Plug 'deoplete-plugins/deoplete-go', { 'do': 'make'}
+"Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
 "
 " ============== HTML/CSS plugins ====================
@@ -179,6 +182,24 @@ endif
 " }}}
 
 " Plugins settings and mappings {{{
+autocmd BufEnter * lua require'completion'.on_attach()
+
+
+let g:UltiSnipsExpandTrigger="<C-Tab>"
+let g:UltiSnipsJumpForwardTrigger="<C-k>"
+let g:UltiSnipsJumpBackwardTrigger="<C-j>"
+let g:completion_enable_snippet = 'UltiSnips'
+
+" Use <Tab> and <S-Tab> to navigate through popup menu
+inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+
+
+" Set completeopt to have a better completion experience
+set completeopt=menuone,noinsert,noselect
+
+" Avoid showing message extra message when using completion
+set shortmess+=c
 
 " Tagbar -----------------------------
 
@@ -200,20 +221,65 @@ nnoremap <F3> <cmd>CHADopen<cr>
 let NERDTreeIgnore = ['\.pyc$', '\.pyo$']
 
 
+" LSP - let's hope this works >.<
+lua require('uz.lsp')
+
+" LSP ----------------------------------
+"lua require 'gz.lsp'
+
+" Compe --------------------------------
+"set completeopt=menuone,noselect
+
+"let g:compe = {}
+"let g:compe.enabled = v:true
+"let g:compe.autocomplete = v:true
+"let g:compe.debug = v:false
+"let g:compe.min_length = 1
+"let g:compe.preselect = 'enable'
+"let g:compe.throttle_time = 80
+"let g:compe.source_timeout = 200
+"let g:compe.incomplete_delay = 400
+"let g:compe.max_abbr_width = 100
+"let g:compe.max_kind_width = 100
+"let g:compe.max_menu_width = 100
+"let g:compe.documentation = v:true
+
+"let g:compe.source = {}
+"let g:compe.source.path = v:true
+"let g:compe.source.buffer = v:true
+"let g:compe.source.calc = v:true
+"let g:compe.source.vsnip = v:true
+"let g:compe.source.nvim_lsp = v:true
+"let g:compe.source.nvim_lua = v:true
+"let g:compe.source.spell = v:true
+"let g:compe.source.tags = v:true
+"let g:compe.source.snippets_nvim = v:true
+"let g:compe.source.treesitter = v:true
+
+"let g:lexima_no_default_rules = v:true
+"call lexima#set_default_rules()
+"inoremap <silent><expr> <C-Space> compe#complete()
+"inoremap <silent><expr> <CR>      compe#confirm(lexima#expand('<LT>CR>', 'i'))
+"inoremap <silent><expr> <C-e>     compe#close('<C-e>')
+"inoremap <silent><expr> <C-f>     compe#scroll({ 'delta': +4 })
+"inoremap <silent><expr> <C-d>     compe#scroll({ 'delta': -4 })
+
+"lua require 'gz.compe'
+
 " CoC ----------------------------------
 
 
 " Move in longer floating windows
-nnoremap <nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
-nnoremap <nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
-inoremap <nowait><expr> <C-f> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
-inoremap <nowait><expr> <C-b> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
+"nnoremap <nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
+"nnoremap <nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
+"inoremap <nowait><expr> <C-f> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
+"inoremap <nowait><expr> <C-b> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
 
 " Show docs in floating
-nnoremap <silent> K :call CocActionAsync('doHover')<cr>
+"nnoremap <silent> K :call CocActionAsync('doHover')<cr>
 
 " Invoke completions with <C-Space>
-inoremap <silent><expr> <c-space> coc#refresh()
+"inoremap <silent><expr> <c-space> coc#refresh()
 
 
 " Deoplete -----------------------------
@@ -386,13 +452,13 @@ nnoremap tm  :tabm<Space>
 nnoremap td  :tabclose<CR>
 
 " TAB in general mode will move to text buffer
-nnoremap <silent> <TAB> :bnext<CR>
+"nnoremap <silent> <C-Tab> :bnext<CR>
 
 " SHIFT-TAB will go back
-nnoremap <silent> <S-TAB> :bprevious<CR>
+"nnoremap <silent> <S-TAB> :bprevious<CR>
 
 " CTRL-TAB to close buffer
-nnoremap <silent> <C-TAB>  :bdelete<CR>
+"nnoremap <silent> <C-w>  :bdelete<CR>
 
 
 " Horizontal splits - spawn below
@@ -477,6 +543,11 @@ hi CursorLineNr      ctermfg=208
 hi LineNr            ctermfg=249
 hi CursorLine        ctermbg=236
 hi NormalFloat       ctermbg=235
+
+hi LspDiagnosticsDefaultError cterm=bold ctermfg=167
+hi LspReferenceRead  cterm=bold ctermbg=none ctermfg=202
+hi LspReferenceText  cterm=bold ctermbg=none ctermfg=202
+hi LspReferenceWrite cterm=bold ctermbg=none ctermfg=202
 
 function SemshiHighlights()
     hi semshiBuiltin ctermfg=39

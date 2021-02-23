@@ -1,0 +1,19 @@
+{
+    "yaml.format.enable": true,
+    "yaml.schemas": {
+        "kubernetes": ["/*.yaml", "!/Chart.yaml", "!/values.yaml"]
+    },
+
+    "languageserver": {
+        "terraform": {
+            "command": "terraform-ls",
+            "args": ["serve"],
+            "filetypes": [
+                "terraform",
+                "tf"
+            ],
+            "initializationOptions": {},
+            "settings": {}
+        }
+    }
+}

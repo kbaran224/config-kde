@@ -31,26 +31,6 @@ let g:go_auto_sameids                   = 1
 " Show variable type on airline
 let g:go_auto_type_info                 = 1
 
-" Add struct tags
-nmap gtj :CocCommand go.tags.add json<cr>
-nmap gty :CocCommand go.tags.add yaml<cr>
-nmap gtx :CocCommand go.tags.clear<cr>
-
 " Organize code on write 
-autocmd BufWritePre *.go :call CocAction('runCommand', 'editor.action.organizeImport')
-
-" Move to next placeholder with Tab
-let g:coc_snippet_next = '<tab>'
-
-" Use <tab> for trigger completion and navigate to the next complete item
-function! s:check_back_space() abort
-  let col = col('.') - 1
-  return !col || getline('.')[col - 1]  =~ '\s'
-endfunction
-
-" Finish completion with Enter
-inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
-
-" Move through options with Tab and S-Tab
-inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<C-j>"
-inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<C-k>"
+"autocmd BufWritePre *.go call ft#go#ImportAndFormat()
+autocmd BufWritePre *.go lua goimports(1000)
