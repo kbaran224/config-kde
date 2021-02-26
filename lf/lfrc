@@ -110,6 +110,7 @@ map gc cd ~/.config
 map gf cd ~/usr/downloads_firefox
 map gt cd ~/usr/downloads_tox
 map gr cd ~/usr/downloads_rambox
+map gp cd &xclip -o -selection clipboard
 
 # use enter for shell commands
 map <enter> shell
@@ -322,8 +323,9 @@ map <c-e> down
 map <c-n> $tmux new-window lf
 map L $tmux next-window
 map H $tmux previous-window
-map - &printf "%s" "$fx" | xclip
-map _ &printf "%s" "$fx" | sed 's|.*/||g' | xclip
+map - &printf "%s" "$fx" | xclip -selection clipboard
+map _ &printf "%s" "$fx" | sed 's|.*/||g' | xclip -selection clipboard
+map = cdc
 
 # cut, trash and delete as different keybindings
 map d
@@ -342,3 +344,16 @@ map dD delete
 	#lf -remote 'send load'
 	#lf -remote 'send sync'
 #}}
+
+# cd to dir from clipboard
+cmd cdc ${{
+        set -f
+        dir="$(xclip -o -selection clipboard)"
+        if [ -d "${dir}" ]; then
+                dir_quoted="$(readlink -f "${dir}" | sed 's|\(.*\)|"\1"|')"
+                lf -remote "send ${id} cd ${dir_quoted}"
+        else
+                echo "can't find directory"
+                exit 1
+        fi
+}}
